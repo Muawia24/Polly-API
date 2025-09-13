@@ -46,7 +46,7 @@ if __name__ == "__main__":
     # Example 1: Using the simple version with exceptions
     print("Example 1: User Registration")
     try:
-        user_data = register_user("testuser4", "testpassword456")
+        user_data = register_user("testuser5", "testpassword456")
         print(f"Registration successful! User ID: {user_data['id']}, Username: {user_data['username']}")
     except ValueError as e:
         print(f"Registration failed: {e}")

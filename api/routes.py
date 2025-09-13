@@ -20,7 +20,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return new_user
+    return {"id": new_user.id, "username": new_user.username}
 
 
 @router.post("/login", response_model=schemas.Token, status_code=200)
@@ -59,6 +59,13 @@ def vote_on_poll(
     current_user: models.User = Depends(auth.get_current_user),
 ):
     # Check if the poll exists
+    if not poll_id or poll_id <= 0:
+        raise HTTPException(status_code=400, detail="Poll ID not valid")
+    if not vote.option_id or vote.option_id <= 0:
+        raise HTTPException(status_code=400, detail="Option ID not valid")
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     poll = db.query(models.Poll).filter(models.Poll.id == poll_id).first()
     if not poll:
         raise HTTPException(status_code=404, detail="Poll not found")
@@ -82,14 +89,14 @@ def vote_on_poll(
         existing_vote.option_id = vote.option_id
         db.commit()
         db.refresh(existing_vote)
-        return existing_vote
+        return {"id": existing_vote.id, "user_id": existing_vote.user_id, "option_id": existing_vote.option_id, "created_at": existing_vote.created_at}
     
     # Create a new vote
     new_vote = models.Vote(user_id=current_user.id, option_id=vote.option_id)
     db.add(new_vote)
     db.commit()
     db.refresh(new_vote)
-    return new_vote
+    return {"id": new_vote.id, "user_id": new_vote.user_id, "option_id": new_vote.option_id, "created_at": new_vote.created_at}
 
 
 @router.get("/polls/{poll_id}/results", status_code=200)
@@ -128,6 +135,8 @@ def create_poll(
         raise HTTPException(
             status_code=400, detail="At least two options are required for a poll"
         )
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     
     # Create the poll
     new_poll = models.Poll(question=poll.question, owner_id=current_user.id)
@@ -142,7 +151,7 @@ def create_poll(
     
     db.commit()
     db.refresh(new_poll)
-    return new_poll
+    return { "question": new_poll.question, "options": new_poll.options }
 
 
 @router.delete("/polls/{poll_id}", status_code=204)
