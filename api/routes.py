@@ -10,7 +10,7 @@ from sqlalchemy import func
 router = APIRouter()
 
 
-@router.post("/register", response_model=schemas.UserOut)
+@router.post("/register", response_model=schemas.UserOut, status_code=201)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = auth.get_user(db, user.username)
     if db_user:
@@ -23,7 +23,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
-@router.post("/login", response_model=schemas.Token)
+@router.post("/login", response_model=schemas.Token, status_code=200)
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
@@ -37,13 +37,13 @@ def login(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.get("/polls", response_model=List[schemas.PollOut])
+@router.get("/polls", response_model=List[schemas.PollOut], status_code=200)
 def get_polls(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     polls = db.query(models.Poll).offset(skip).limit(limit).all()
     return polls
 
 
-@router.get("/polls/{poll_id}", response_model=schemas.PollOut)
+@router.get("/polls/{poll_id}", response_model=schemas.PollOut, status_code=200)
 def get_poll(poll_id: int, db: Session = Depends(get_db)):
     poll = db.query(models.Poll).filter(models.Poll.id == poll_id).first()
     if not poll:
@@ -51,7 +51,7 @@ def get_poll(poll_id: int, db: Session = Depends(get_db)):
     return poll
 
 
-@router.post("/polls/{poll_id}/vote", response_model=schemas.VoteOut)
+@router.post("/polls/{poll_id}/vote", response_model=schemas.VoteOut, status_code=200)
 def vote_on_poll(
     poll_id: int,
     vote: schemas.VoteCreate,
@@ -92,7 +92,7 @@ def vote_on_poll(
     return new_vote
 
 
-@router.get("/polls/{poll_id}/results")
+@router.get("/polls/{poll_id}/results", status_code=200)
 def get_poll_results(poll_id: int, db: Session = Depends(get_db)):
     # Check if the poll exists
     poll = db.query(models.Poll).filter(models.Poll.id == poll_id).first()
@@ -117,7 +117,7 @@ def get_poll_results(poll_id: int, db: Session = Depends(get_db)):
     return {"poll_id": poll_id, "question": poll.question, "results": formatted_results}
 
 
-@router.post("/polls", response_model=schemas.PollOut)
+@router.post("/polls", response_model=schemas.PollOut, status_code=201)
 def create_poll(
     poll: schemas.PollCreate,
     db: Session = Depends(get_db),
